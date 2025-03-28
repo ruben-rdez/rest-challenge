@@ -1,0 +1,16 @@
+resilience4j:
+  ratelimiter:
+    instances:
+      userEntityRateLimiter:
+        limitForPeriod: 5   # Number of requests allowed per period
+        limitRefreshPeriod: 20s  # The time window in which the limit applies
+        timeoutDuration: 0s  # Timeout for requests that exceed the limit
+      userEntityCircuitBreaker:
+        failureRateThreshold: 50  # Open the circuit if failures exceed 50%
+        slowCallRateThreshold: 50 # Open if slow calls exceed 50%
+        slowCallDurationThreshold: 2s # Calls taking >2s are considered slow
+        minimumNumberOfCalls: 5   # Minimum 5 calls to evaluate failure rate
+        slidingWindowSize: 10     # Rolling window size for monitoring failures
+        waitDurationInOpenState: 10s  # Wait 10s before trying to close the circuit
+        permittedNumberOfCallsInHalfOpenState: 2 # Allow 2 test calls in half-open state
+        automaticTransitionFromOpenToHalfOpenEnabled: true # Auto transition
