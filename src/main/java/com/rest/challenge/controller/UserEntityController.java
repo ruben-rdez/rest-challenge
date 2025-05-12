@@ -94,4 +94,16 @@ public class UserEntityController {
         logger.error("Fallback for rate limit exceeded: {}", ex.getMessage());
         return new PageImpl<>(Collections.emptyList());
     }
+
+    @PostMapping("/cache/clear")
+    public ResponseEntity<Void> clearCache() {
+        userEntityService.clearCache();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/cache/clear/usersPaginated")
+    public ResponseEntity<Void> clearUsersPaginatedCache() {
+        userEntityService.clearUsersPaginatedCache();
+        return ResponseEntity.ok().build();
+    }
 }

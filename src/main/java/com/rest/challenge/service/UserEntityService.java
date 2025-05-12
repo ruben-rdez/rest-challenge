@@ -7,6 +7,9 @@ import com.rest.challenge.repository.UserEntityRepository;
 import com.rest.challenge.util.UserEntityMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +32,9 @@ public class UserEntityService {
         this.userEntityMapper = userEntityMapper;
     }
 
+    @Cacheable(value = "usersPaginated",
+            key = "{#page, #size, #sortBy, #sortDirection}",
+            unless = "#result == null || #result.content.isEmpty()")
     public Page<UserEntityDTO> getUsers(int page, int size, String sortBy, String sortDirection){
         logger.info("Fetching all users");
         Sort.Direction direction =
@@ -37,6 +43,7 @@ public class UserEntityService {
         return userEntityRepository.findAll(pageable).map(userEntityMapper::toDTO);
     }
 
+    @Cacheable(value = "user", key = "#id")
     public Optional<UserEntityDTO> getUserById(Long id) {
         logger.info("Fetching user by ID: {}", id);
         UserEntity userEntity = userEntityRepository.findById(id)
@@ -47,12 +54,14 @@ public class UserEntityService {
         return Optional.ofNullable(userEntityMapper.toDTO(userEntity));
     }
 
+    @CachePut(value = "user", key = "#userEntityDTO.email")
     public UserEntityDTO saveUser(UserEntityDTO userEntityDTO) {
         logger.info("Creating new user: {}", userEntityDTO.getEmail());
         return userEntityMapper.toDTO(
                 userEntityRepository.save(userEntityMapper.toEntity(userEntityDTO)));
     }
 
+    @CachePut(value = "user", key = "#id")
     public UserEntityDTO updateUser(Long id, UserEntityDTO userEntityDTO) {
         logger.info("Updating user with ID: {}", id);
         return userEntityRepository.findById(id).map(user -> {
@@ -65,8 +74,19 @@ public class UserEntityService {
         });
     }
 
+    @CacheEvict(value = "user", key = "#id")
     public void deleteUser(Long id) {
         logger.warn("Deleting user with ID: {}", id);
         userEntityRepository.deleteById(id);
+    }
+
+    @CacheEvict(value = "user", allEntries = true)
+    public void clearCache() {
+        logger.warn("Clearing users cache");
+    }
+
+    @CacheEvict(value = "usersPaginated", allEntries = true)
+    public void clearUsersPaginatedCache() {
+        logger.info("Clearing paginated users cache");
     }
 }

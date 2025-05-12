@@ -1,0 +1,64 @@
+version: "3.9"
+services:
+
+  rest-challenge:
+    image: rest-challenge
+    container_name: rest-challenge-container
+    build:
+        context: .
+        dockerfile: Dockerfile
+    ports:
+        - "8080:8080"
+    networks:
+        - rest-challenge-network
+    depends_on:
+        - mysql
+
+  mysql:
+    image: mysql
+    container_name: mysql_docker
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: challengedb
+      MYSQL_USER: docker_user
+      MYSQL_PASSWORD: docker_pwd
+    ports:
+      - "3307:3306"
+    networks:
+      - rest-challenge-network
+    volumes:
+      - rest-challenge-volume:/var/lib/mysql
+
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://sonar-db:5432/sonar
+      - SONARQUBE_JDBC_USERNAME=sonar
+      - SONARQUBE_JDBC_PASSWORD=sonar
+    depends_on:
+      - sonar-db
+    networks:
+      - rest-challenge-network
+
+  sonar-db:
+    image: postgres:latest
+    container_name: sonarqube_db
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    volumes:
+      - sonarqube_db_data:/var/lib/postgresql/data
+    networks:
+      - rest-challenge-network
+
+networks:
+  rest-challenge-network:
+
+volumes:
+  rest-challenge-volume:
+  sonarqube_db_data:
